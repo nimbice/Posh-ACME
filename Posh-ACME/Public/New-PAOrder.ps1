@@ -131,7 +131,7 @@ function New-PAOrder {
         # skip confirmation if the Domains, KeyLength, or Profile are different
         # regardless of the original order status or if the order is pending but expired
         if ( ($order -and ($KeyLength -ne $order.KeyLength -or
-             ($oldDomains -ne ($Domain | Sort-Object) -join ',') -or
+             ($oldDomains -ne (($Domain | Sort-Object) -join ',')) -or
              ($Profile -and $Profile -ne $order.Profile) -or
              ($order.status -eq 'pending' -and (Get-DateTimeOffsetNow) -gt ([DateTimeOffset]::Parse($order.expires))) ))) {
             # do nothing
