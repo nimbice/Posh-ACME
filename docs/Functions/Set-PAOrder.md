@@ -20,7 +20,7 @@ Set-PAOrder [[-MainDomain] <String>] [-Name <String>] [-NoSwitch] [-Plugin <Stri
  [-Subject <String>] [-FriendlyName <String>] [-PfxPass <String>] [-PfxPassSecure <SecureString>]
  [-UseModernPfxEncryption] [-UsePfxDerEncoding] [-Install] [-OCSPMustStaple] [-DnsSleep <Int32>]
  [-DnsVariant <String>] [-ValidationTimeout <Int32>] [-PreferredChain <String>] [-AlwaysNewKey]
- [-UseSerialValidation] [-Profile <String>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-UseSerialValidation] [-Profile <String>] [-CSRPath <String>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Revoke
@@ -59,6 +59,15 @@ Set-PAOrder example.com -Plugin FakeDNS -PluginArgs $pArgs
 ```
 
 Reset the plugin and its arguments for the specified order.
+
+### Example 4: Replace the CSR
+
+```powershell
+Set-PAOrder example.com -CSRPath .\new-request.csr
+Submit-Renewal example.com
+```
+
+Replace the certificate request on an order that was created from a CSR. The next renewal uses the new request.
 
 ## Parameters
 
@@ -488,6 +497,21 @@ If specified, the data in PFX files will be DER encoded rather than the default 
 Type: SwitchParameter
 Parameter Sets: Edit
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -CSRPath
+Either the filesystem path to a certificate request (CSR) file in PEM (Base64) format or the raw string contents of such a file. If using the string version, the PEM header and footer must be separated by line breaks from the Base64 content just like they would be in a normal file. Only valid for orders that were originally created from a CSR. The new request is used starting with the next renewal.
+
+```yaml
+Type: String
+Parameter Sets: Edit
+Aliases: CSRString
 
 Required: False
 Position: Named

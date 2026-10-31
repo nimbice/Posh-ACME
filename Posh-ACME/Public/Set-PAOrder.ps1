@@ -62,7 +62,10 @@ function Set-PAOrder {
         [Parameter(ParameterSetName='Edit')]
         [switch]$UseSerialValidation,
         [Parameter(ParameterSetName='Edit')]
-        [string]$Profile
+        [string]$Profile,
+        [Parameter(ParameterSetName='Edit')]
+        [Alias('CSRString')]
+        [string]$CSRPath
     )
 
     Begin {
@@ -140,6 +143,20 @@ function Set-PAOrder {
             $rewritePfx = $false
             $rewriteCer = $false
             $psbKeys = $PSBoundParameters.Keys
+
+            # validate a new CSR before changing anything else
+            $csrDetails = $null
+            if ('CSRPath' -in $psbKeys) {
+                if ([String]::IsNullOrWhiteSpace($order.CSRBase64Url)) {
+                    Write-Error "Order '$($order.Name)' was not created from a CSR. Use New-PACertificate -CSRPath to create one that is."
+                    return
+                }
+                try { $csrDetails = Get-CsrDetails $CSRPath }
+                catch {
+                    Write-Error $_
+                    return
+                }
+            }
 
             if ('Plugin' -in $psbKeys -and
                 ($null -eq $order.Plugin -or $null -ne (Compare-Object $Plugin $order.Plugin))) {
@@ -271,6 +288,14 @@ function Set-PAOrder {
                 $order | Add-Member 'UsePfxDerEncoding' $UsePfxDerEncoding.IsPresent -Force
                 $saveChanges = $true
                 $rewritePfx = $true
+            }
+
+            if ($csrDetails -and $csrDetails.Base64Url -ne $order.CSRBase64Url) {
+                # Submit-Renewal reads request.csr, so the new CSR is used from the next renewal
+                Write-Verbose "Setting new CSR"
+                $order.CSRBase64Url = $csrDetails.Base64Url
+                Export-Pem $csrDetails.PemLines (Join-Path $order.Folder 'request.csr')
+                $saveChanges = $true
             }
 
             if ($saveChanges) {
